@@ -1,0 +1,24 @@
+{
+  "name": "hs-mariusz-musicdb",
+  "version": "1.0.0",
+  "description": "Simple music recommendation engine",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/routific/hs-Mariusz-musicDB.git"
+  },
+  "author": "Mariusz Bachurski",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "*",
+    "express": "*",
+    "mongoose": "*"
+  },
+  "bugs": {
+    "url": "https://github.com/routific/hs-Mariusz-musicDB/issues"
+  },
+  "homepage": "https://github.com/routific/hs-Mariusz-musicDB#readme"
+}
