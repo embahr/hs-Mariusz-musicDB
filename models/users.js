@@ -58,3 +58,34 @@ module.exports.addListen = function(user, hear, options, callback) {
       };
     Users.findOneAndUpdate(query, lis, options, callback);
 };
+
+module.exports.getRecommends = function(user, callback) {
+  var query = { user: user };
+// Check if user exists in DB
+  Users.findOne({user: { $in: user }}, {user: 1, _id: 0}, function(err, userExists) {
+    if (userExists !== null) {
+      Users.findOne(query, {music: 1, follows: 1, _id: 0}, callback);
+    } else {
+        console.log("Sorry, user " + user + " doesn't exist");
+      }
+  });
+};
+
+/*
+module.exports.getFollowsMusic = function(user, callback) {
+  var query = user;
+  query.forEach(function(item, index) {
+    console.log(item, index, query);
+    Users.findOne({user: item}, {music: 1, _id: 0}, callback);
+});
+};
+*/
+
+module.exports.getFollowsMusic = function(user, tunes, callback) {
+  var query = user;
+  query.forEach(function(item, index) {
+  //  console.log(item, index, query);
+    Users.findOneAndUpdate({user: item}, { $addToSet: { reco: tunes.music}}, callback);
+  //  console.log(tunes);
+});
+};
