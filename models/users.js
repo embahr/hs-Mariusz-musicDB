@@ -71,21 +71,8 @@ module.exports.getRecommends = function(user, callback) {
   });
 };
 
-/*
 module.exports.getFollowsMusic = function(user, callback) {
-  var query = user;
-  query.forEach(function(item, index) {
-    console.log(item, index, query);
-    Users.findOne({user: item}, {music: 1, _id: 0}, callback);
-});
-};
-*/
-
-module.exports.getFollowsMusic = function(user, tunes, callback) {
-  var query = user;
-  query.forEach(function(item, index) {
-  //  console.log(item, index, query);
-    Users.findOneAndUpdate({user: item}, { $addToSet: { reco: tunes.music}}, callback);
-  //  console.log(tunes);
-});
+  user.forEach(function(user) {
+    Users.find({user: { $in: user }}, {music: 1, _id: 0}, callback);
+  });
 };
