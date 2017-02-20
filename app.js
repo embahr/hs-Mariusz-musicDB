@@ -114,8 +114,9 @@ app.get('/recommendations', function(req, res) {
       listens = [],
       follows = [],
       listenTags = [],
-      uniqueTags = [],
+      listenTags2 = [],
       songSuggest = {"name": []},
+      fMus = [],
       recommendations = {"list": []};
 
   Users.getRecommends(user, function(err, docs) {
@@ -125,56 +126,40 @@ app.get('/recommendations', function(req, res) {
     listens = docs.music;
     follows = docs.follows;
 
-// GET tags related to listens (docs.music) from user
-    Music.getTags(listens, function(err, tags) {
-      if (err) {
-        throw err;
-      }
-// Create array from tags
-      tags.forEach(function(item,index) {
-        listenTags = Array.prototype.concat.apply(listenTags, tags[index].tags);
-      });
-// Remove duplicate tags
-      uniqueTags = listenTags.filter(function(tag, pos, self) {
-        return self.indexOf(tag) == pos;
-      });
-// GET songs that share tags with results of getTags
-      Music.getSongs(uniqueTags, function(err, songs) {
+//    if (follows.length !== 0) {
+      Users.getFollowsMusic(follows, function(err, followsMusic) {
         if (err) {
           throw err;
         }
-// Object containing songs that share results of getTags
-        songs.forEach(function(item, index) {
-          songSuggest.name[index] = songs[index].name;
+         followsMusic.forEach(function(fmItem, fmIndex) {
+            fMus[fmIndex] = followsMusic[fmIndex].music;
         });
-          console.log(listens);
-          console.log(songSuggest.name);
-// Remove music the user has already listened to
-         songSuggest = songSuggest.name;
-         recommend = songSuggest.filter(function (a) {
-            return listens.indexOf(a) == -1;
+           fMus = Array.prototype.concat.apply(listens, fMus);
+//      });
+  //  }
+      Music.getTags(fMus, function(err, tags) {
+        if (err) {throw err;}
+          tags.forEach(function(r, x) {
+            listenTags = listenTags.concat(tags[x].tags[0]);
+            listenTags2 = listenTags2.concat(tags[x].tags[1]);
           });
-// List 5 recommended songs
-        for (var i = 0; i < 5; i++) {
-          recommendations.list[i] = recommend[i];
-        }
-          console.log(recommend);
-          return res.end(JSON.stringify(recommendations));
+          Music.getSongs(listenTags, listenTags2, function(err, songs) {
+            if (err) {throw err;}
+              songs.forEach(function(item, index) {
+                songSuggest.name[index] = songs[index].name;
+              });
+              recommend = songSuggest.name;
+              newMusic = recommend.filter(function (el, i, arr) {
+                  return listens.indexOf(el) === -1;
+                });
+              for (var i = 0; i < 5; i++) {
+                recommendations.list[i] = newMusic[i];
+              }
+              return res.end(JSON.stringify(recommendations));
+          });
       });
     });
-
-    /*
-    Users.getFollowsMusic(follows, fMus, function(err, followsMusic) {
-      if (err) {
-        throw err;
-      }
-        suggestions = followsMusic.music;
-       fMus = Array.prototype.concat.apply(fMus, suggestions);
-    return res.end(JSON.stringify(fMus));
-      });
-      */
-  }
-  );
+  });
 });
 
 // Set port for server
