@@ -3,9 +3,15 @@ var express = require('express'),
     mongoose = require('mongoose'),
     app = express(),
     db = mongoose.connection,
-    port = '3000';
-
-    var fMus = [];
+    port = '3000',
+    recommendations = {"list": []},
+    listens = [],
+    follows = [],
+    listenTags = [],
+    listenTags2 = [],
+    songSuggest = {"name": []},
+    fMus = [];
+    
     var suggestions = [];
 
 // Middleware
@@ -110,14 +116,14 @@ app.get('/music', function(req, res) {
 
 // GET music recommendations
 app.get('/recommendations', function(req, res) {
-  var user = req.query.user,
-      listens = [],
-      follows = [],
-      listenTags = [],
-      listenTags2 = [],
-      songSuggest = {"name": []},
-      fMus = [],
-      recommendations = {"list": []};
+  var user = req.query.user;
+//    listens = [],
+//      follows = [],
+//      listenTags = [],
+//      listenTags2 = [],
+//      songSuggest = {"name": []},
+//      fMus = [];
+//      recommendations = {"list": []};
 
   Users.getRecommends(user, function(err, docs) {
     if (err) {
@@ -127,7 +133,7 @@ app.get('/recommendations', function(req, res) {
     follows = docs.follows;
 
 //    if (follows.length !== 0) {
-      Users.getFollowsMusic(follows, function(err, followsMusic) {
+/*      Users.getFollowsMusic(follows, function(err, followsMusic) {
         if (err) {
           throw err;
         }
@@ -135,31 +141,36 @@ app.get('/recommendations', function(req, res) {
             fMus[fmIndex] = followsMusic[fmIndex].music;
         });
            fMus = Array.prototype.concat.apply(listens, fMus);
-//      });
-  //  }
-      Music.getTags(fMus, function(err, tags) {
-        if (err) {throw err;}
-          tags.forEach(function(r, x) {
-            listenTags = listenTags.concat(tags[x].tags[0]);
-            listenTags2 = listenTags2.concat(tags[x].tags[1]);
-          });
-          Music.getSongs(listenTags, listenTags2, function(err, songs) {
-            if (err) {throw err;}
-              songs.forEach(function(item, index) {
-                songSuggest.name[index] = songs[index].name;
-              });
-              recommend = songSuggest.name;
-              newMusic = recommend.filter(function (el, i, arr) {
-                  return listens.indexOf(el) === -1;
-                });
-              for (var i = 0; i < 5; i++) {
-                recommendations.list[i] = newMusic[i];
-              }
-              return res.end(JSON.stringify(recommendations));
-          });
+
+        console.log(listens.concat(fMus));
       });
-    });
-  });
+*/
+  //  }
+      //console.log(followsMusic);
+        Music.getTags(listens, function(err, tags) {
+          if (err) {throw err;}
+            tags.forEach(function(r, x) {
+              listenTags = listenTags.concat(tags[x].tags[0]);
+              listenTags2 = listenTags2.concat(tags[x].tags[1]);
+            });
+            Music.getSongs(listenTags, listenTags2, function(err, songs) {
+              if (err) {throw err;}
+                songs.forEach(function(item, index) {
+                  songSuggest.name[index] = songs[index].name;
+                });
+                  recommend = songSuggest.name;
+                  newMusic = recommend.filter(function (el, i, arr) {
+                      return listens.indexOf(el) === -1;
+                    });
+                  for (var i = 0; i < 5; i++) {
+                    recommendations.list[i] = newMusic[i];
+                  }
+            //  return res.end(JSON.stringify(recommendations));
+          });
+        });
+        return res.json(recommendations);
+  //});
+});
 });
 
 // Set port for server
