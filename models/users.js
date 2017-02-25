@@ -62,7 +62,7 @@ module.exports.addListen = function(user, hear, options, callback) {
 module.exports.getRecommends = function(user, callback) {
   var query = { user: user };
 // Check if user exists in DB
-  Users.findOne({user: { $in: user }}, {user: 1, _id: 0}, function(err, userExists) {
+  Users.findOne({user: user }, {user: 1, _id: 0}, function(err, userExists) {
     if (userExists !== null) {
       Users.findOne(query, {music: 1, follows: 1, _id: 0}, callback);
     } else {
@@ -72,7 +72,5 @@ module.exports.getRecommends = function(user, callback) {
 };
 
 module.exports.getFollowsMusic = function(user, callback) {
-  user.forEach(function(user) {
     Users.find({user: { $in: user }}, {music: 1, _id: 0}, callback);
-  });
 };

@@ -20,19 +20,17 @@ module.exports.getMusic = function(callback) {
 };
 
 // GET tags related to listens (docs.music) from user
-module.exports.getTags = function(songs, callback) {
-  Music.find({ name: {$in: songs}}, {tags: 1, _id: 0}, callback);
+module.exports.getTags = function(songs, fSongs, callback) {
+  Music.find({$or : [{ name: {$in: songs}}, { name: {$in: fSongs}}]}, {tags: 1, _id: 0}, callback);
 //  console.log('***Songs the user has listened to: ' + songs);
 };
 
 // GET songs that share tags with results of getTags
-module.exports.getSongs = function(tags, tags2, callback) {
-  tags.every(function(tagCheck, ch) {
+module.exports.getSongs = function(tags, callback) {
+  // Search DB for songs that contain both tags, then songs that contain either tag.
     Music.find({ $or : [
-      { $and : [ { tags : {$in: [tags[ch]]} }, { tags : {$in: [tags2[ch]] }} ] },
-      { $or : [ { tags : { $in: [tags[ch]]} }, { tags : { $in: [tags2[ch]]}} ] }
+      { $and : [ { tags : {$in: [tags[0]]} }, { tags : {$in: [tags[1]] }} ] },
+      { $or : [ { tags : { $in: [tags[0]]} }, { tags : { $in: [tags[1]]}} ] }
     ]} , {name: 1, tags: 1, _id: 0}, callback).sort({ tags: -1});
-    console.log(tags);
-  });
-//console.log('***Tags of the songs the user has listened to: ' + tags);
+// console.log('***Tags of the songs the user has listened to: ' + tags);
 };
