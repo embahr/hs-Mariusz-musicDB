@@ -4,15 +4,8 @@ var express = require('express'),
     app = express(),
     db = mongoose.connection,
     port = '3000',
-    recommendations = {"list": []},
-    listens = [],
-    follows = [],
-    listenTags = [],
-    listenTags2 = [],
-    songSuggest = {"name": []},
-    fMus = [];
-    
-    var suggestions = [];
+    fMus = [],
+    recommendations = {"list": []};
 
 // Middleware
 app.use(bodyParser.json());
@@ -46,32 +39,14 @@ app.post('/follow', function(req, res) {
       following = [],
       followIndex = following.indexOf(toFollow);
 
-   // TO DO: check if user is already following user to be added
-   // can't update 'var following' from the callback...
-/*
-    Users.getFollows(user, function(err, follow) {
-      if (err) {
-        throw err;
-      } else {
-          res.json(follow[0].follows);
-          console.log(following);
-      }
-    });
-    //console.log(following);
-*/
 
 // Check if user is trying to follow themself
   if (selfIndex == -1) {
-      // Check if user already follows user to be added
-    if (followIndex !== -1) {
-      //console.log("You are already following " + toFollow + ".");
-    } else {
       Users.addFollow(user, {"follows": toFollow}, {new: true, upsert: true}, function(err, result) {
       res.send("You are now following " + toFollow + ".");
       console.log("You are now following " + toFollow + ".");
       });
-    }
-  } else {
+    } else {
    res.send(user + ", you can't follow yourself!");
    console.log(user +", you can't follow yourself!");
   }
@@ -116,61 +91,58 @@ app.get('/music', function(req, res) {
 
 // GET music recommendations
 app.get('/recommendations', function(req, res) {
-  var user = req.query.user;
-//    listens = [],
-//      follows = [],
-//      listenTags = [],
-//      listenTags2 = [],
-//      songSuggest = {"name": []},
-//      fMus = [];
-//      recommendations = {"list": []};
-
+  var user = req.query.user,
+      listens = [],
+      follows = [],
+      listenTags = [],
+      songSuggest = [];
+  fMus.length = 0;
+  songSuggest.length = 0;
   Users.getRecommends(user, function(err, docs) {
     if (err) {
       throw err;
     }
+    // Store music user has listened to, and who they follow.
     listens = docs.music;
     follows = docs.follows;
-
-//    if (follows.length !== 0) {
-/*      Users.getFollowsMusic(follows, function(err, followsMusic) {
+    // If user is following someone, get music follows have listened to.
+    if (follows.length !== 0) {
+      Users.getFollowsMusic(follows, function(err, followsMusic) {
         if (err) {
           throw err;
         }
-         followsMusic.forEach(function(fmItem, fmIndex) {
-            fMus[fmIndex] = followsMusic[fmIndex].music;
+        followsMusic.forEach(function(fmItem, fmIndex, arr) {
+          fMus = followsMusic[fmIndex].music;
         });
-           fMus = Array.prototype.concat.apply(listens, fMus);
-
-        console.log(listens.concat(fMus));
       });
-*/
-  //  }
-      //console.log(followsMusic);
-        Music.getTags(listens, function(err, tags) {
-          if (err) {throw err;}
-            tags.forEach(function(r, x) {
-              listenTags = listenTags.concat(tags[x].tags[0]);
-              listenTags2 = listenTags2.concat(tags[x].tags[1]);
+    }
+    // Get tags of songs the user and follows have listened to.
+    Music.getTags(listens, fMus, function(err, tags) {
+      if (err) {throw err;}
+        tags.some(function(r, x) {
+          listenTags = tags[x].tags;
+          // Get songs that match above tags.
+          Music.getSongs(listenTags, function(err, songs) {
+            if (err) {
+              throw err;
+            }
+            // Put all suggested songs into an array.
+            for (var s = 0; s < songs.length; s++) {
+              songSuggest = songSuggest.concat(songs[s].name);
+            }
+            // Filter out songs user has already listened to.
+            newMusic = songSuggest.filter(function (el, i, arr) {
+              return listens.indexOf(el) === -1;
             });
-            Music.getSongs(listenTags, listenTags2, function(err, songs) {
-              if (err) {throw err;}
-                songs.forEach(function(item, index) {
-                  songSuggest.name[index] = songs[index].name;
-                });
-                  recommend = songSuggest.name;
-                  newMusic = recommend.filter(function (el, i, arr) {
-                      return listens.indexOf(el) === -1;
-                    });
-                  for (var i = 0; i < 5; i++) {
-                    recommendations.list[i] = newMusic[i];
-                  }
-            //  return res.end(JSON.stringify(recommendations));
+            // Populate object with 5 suggestions
+            for (var i = 0; i < 5; i++) {
+              recommendations.list[i] = newMusic[i];
+            }
           });
         });
-        return res.json(recommendations);
-  //});
-});
+    });
+      return res.json(recommendations);
+  });
 });
 
 // Set port for server
